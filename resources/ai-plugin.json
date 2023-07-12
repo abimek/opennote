@@ -1,0 +1,17 @@
+{
+  "schema_version": "v1",
+  "name_for_model": "NoteSearch",
+  "name_for_human": "OpenNote",
+  "description_for_model": "This model allows you to query it for any information stored on the users personal notebook. If you ask a question, lets say 'what is a circuit' and it'll return the most relevant data on the users computer. Feel free to ask more then one question about a subject rather then one, and ask detailed questions such as 'Where is a PCB used' rather then just 'PCB'",
+  "description_for_human": "Query you're notesc",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "http://localhost:3323/.well-known/openapi.yaml"
+  },
+  "logo_url": "http://localhost:3323/.well-known/logo.png",
+  "contact_email": "hello@contact.com",
+  "legal_info_url": "hello@legal.com"
+}

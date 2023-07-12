@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "opennote-bbea1",
+  "private_key_id": "bb9e1ef7e98cca507dc6dc67f439e497743b9b48",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCRpbWT0GMTMEtw\nMtJiVkzlOA8WMd5X9uXFZsf9Iru9rJg0z+UoYUqc0CYU1fPRmXJ8qTAqyeCP/ABK\nFoXzBUCtYH5aALaZ0/pfkv0a5iqj3KvtA7PFPE6h7lmO8mdkS9Jf4t1XAYEUk1IT\nYdTnDCzj8o3ifyyHpTrhKKEa5L8tK3Wbdpi6LhOrFjL8ELdk1DRD0PxZCHBEUZfY\nGUqrIKZn5B7hafuciK5mVK2r3ueFr7kgwI+Qzqhrvk5AcrC8RxXh6a1D2KLRPA9W\nx1A2AYZuTvtdqziCckWoa519O2os1U83gjzyXjVzbvI2QjhkQTbZ5N2ewvfoYoG5\nekVs3AL9AgMBAAECggEALoA1pOfXefzlWQEg4nyjOFvZlUB+uJ7/ZTMXjt5UCo7c\nWaA2jdniNIbQYb6dhcH0J5Ds6/xgUhgnD4B5a8m1iKVSMfIgWqSvP2xymu/5lS+T\nRKz17HcAs/qhZV5HXGJI3IxWFr1INQWEIuQNUWc1veFnI3VvBi/eyJxsM2XtE8Jd\nEBgN74FLr9sYJTvv1x9Oz1Wca1HXL01rgMz+qAesSduAY+WgEKzBEhI8iDe+EJn2\npWiLe3Aw0Ao3WWKwKRUK3E2nHZ9RuEsEf0uGGLI+L+aOyDpWaw9UutiN7A4f2q0N\ncgU2rbC9Wf+UPQFMnjwI6Epzwosiv13mx2W9mSHrkQKBgQDCtKGIKjZ3x1vb/rHv\ntGdLhqJyARmJ5Nu6tvPmUkGe3yRZsLhs6jQPX3ynpb8WD/guJrO5NegQSWrD4VMW\nY5j5O9Ak/tn60WSngAiQjLG9udm/uxBLp4w33HnhjKC8SjQVoAM25ihUWOm5pTBT\n7MmjfV3TmHMB1snvVOsyDhCfdwKBgQC/f3Wb2SP1I+bf0bczHy9R+XgyVvnIW/p0\nRmHvqfvNOqUetQAB0mythuz8jHVidkFEN/fIW9Wohp1ACb+2ZCqD/ddTLfav7qeh\nqA6ZohCE/vuitzHepUn9bKTwfi8pTLfuYkRWUjNMGYe9CZZ/UL+TTvqucpQ3IIOy\nlCuSCcsWKwKBgFh5Y/1P0ThUarVo4sodm+KB50cOoOA8Emyhveqm7hKXKxlmaCd1\ntPpXVXmIo3APCaNPCtPaXv0nn1ArD2pZD6YRO9/TvpFunOJQF5Q3mnyv+vZYtmrq\nU5j+opOPJ2rn/Qrmjw9fPmw1it9E5NT+ABI+YWhJGdl4FIKgf89a/Mq5AoGAVNP6\nXiIvGn1f3U/B7oRm6tIum2YJ2eZcqLsw0QCkiUHsOREGwsfa2neFbU4vBYHK4ZRF\nT9zWZYPUDrUC1qHCb5u3kaIvv7lhSmvuo8G1vaRSBb9O+QiRIRDKc7oB3DKe25tu\nGCrrjE9W4LdpklZLts5qn3IkE9N0Y1vdfSCXdOcCgYA65vf/lr7qV3Y4U6wZXiNh\nDFTlOBD0rvr+T61QFba/x+m45ACxu1uhJfjzYCU2Ia7ef8SrKqLyatFTNPky/Vez\nmsv2XvsaD7qNXTcwIpEO9Q3GTgVLYjn1Bhn+emQFmy3wCmSyyzk7qy+1oG6dfo2k\n9G1zz7s7KFzHQGb/1TKf9g==\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-khg9j@opennote-bbea1.iam.gserviceaccount.com",
+  "client_id": "115864703935353185167",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-khg9j%40opennote-bbea1.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

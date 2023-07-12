@@ -1,0 +1,70 @@
+openapi: 3.0.2
+info:
+  title: OpenNote
+  description: A plugin that retrieves information from the users notes
+  version: 'v1'
+servers:
+  - url: http://localhost:3323
+paths:
+  /query:
+    post:
+      operationId: query_post
+      summary: Finds relevant information about an asked topic from the users notes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueryRequest"
+      responses:
+        "200":
+          description: successfull response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueryResponse"
+components:
+  schemas:
+    QueryResponse:
+      title: QueryResponse
+      required:
+        - results
+      type: object
+      properties:
+        results:
+          title: Results
+          type: array
+          items:
+            $ref: "#/components/schemas/QueryResult"
+    QueryResult:
+      title: QueryResult
+      required:
+        - query
+        - result
+      type: object
+      properties:
+        query:
+          title: Query
+          type: string
+        result:
+          title: Result
+          type: string
+    QueryRequest:
+      title: QueryRequest
+      required:
+        - queries
+      type: object
+      properties:
+        queries:
+          title: Queries
+          type: array
+          items:
+            $ref: "#/components/schemas/Query"
+    Query:
+      title: Query
+      required:
+        - query
+      type: object
+      properties:
+        query:
+          title: Query
+          type: string
