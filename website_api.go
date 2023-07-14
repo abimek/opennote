@@ -16,7 +16,9 @@ type WebsiteCreateUserRequest struct {
 }
 
 func validateUID(uid string, c *gin.Context) bool {
+	authMutex.Lock()
 	_, err := fireauthClient.GetUser(context.Background(), uid)
+	authMutex.Unlock()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: NonExistentUser,
@@ -61,7 +63,9 @@ func initEmptyUserEndpoint(c *gin.Context) {
 
 	data.Uid = request.uid
 	// upload to firestore (user object) only if it doesn't exist,
+	firestoreMutex.Lock()
 	_, _, err = firestoreClient.Collection("users").Add(context.Background(), data)
+	firestoreMutex.Unlock()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
@@ -98,7 +102,9 @@ func getUserEndpoint(c *gin.Context) {
 		return
 	}
 
+	firestoreMutex.Lock()
 	docs, err := firestoreClient.Collection("users").Where("uid", "==", request.uid).Limit(1).Documents(context.Background()).GetAll()
+	firestoreMutex.Unlock()
 	if err != nil || len(docs) == 0 {
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
@@ -136,7 +142,9 @@ func updateUserEndpoint(c *gin.Context) {
 	}
 
 	// Update Document
+	firestoreMutex.Lock()
 	docs, err := firestoreClient.Collection("users").Where("uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
+	firestoreMutex.Unlock()
 	if err != nil || len(docs) == 0 {
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
