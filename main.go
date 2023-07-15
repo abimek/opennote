@@ -8,6 +8,8 @@ import (
 	"github.com/abimek/opennote/routing"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/api/option"
 )
 
@@ -17,6 +19,7 @@ var firestoreClient *firestore.Client
 var fireauthClient *auth.Client
 
 func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	// intialize firebase
 	firebaseSetup()
 
@@ -30,10 +33,13 @@ func main() {
 	r.StaticFile("/.well-known/ai-plugin.json", "./resources/ai-plugin.json")
 	r.StaticFile("/.well-known/logo.png", "./resources/logo.png")
 	r.StaticFile("/.well-known/openapi.yaml", "./resources/openapi.yaml")
+	log.Debug().Msg("Initilizing Requests")
 	routing.Route(r, "POST", "/query", openAIQueryEndpointHandler)
 	routing.Route(r, "POST", "/api/createEmptyUser", initEmptyUserEndpoint)
 	routing.Route(r, "POST", "/api/getUser", getUserEndpoint)
 	routing.Route(r, "POST", "/api/updateUser", updateUserEndpoint)
+
+	log.Info().Msgf("OpenNote server running on port %s", "3323")
 	r.Run(":3323")
 }
 

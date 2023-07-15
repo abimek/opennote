@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/nekomeowww/go-pinecone"
+	"github.com/rs/zerolog/log"
 	"github.com/sashabaranov/go-openai"
 	"io"
 	"net/http"
@@ -45,9 +45,13 @@ func openAIQueryEndpointHandler(c *gin.Context) {
 	}
 
 	jsonData, _ := json.Marshal(docs[0].Data())
-	fmt.Println(string(jsonData))
 	var user User
 	if err = json.Unmarshal(jsonData, &user); err != nil {
+		log.Error().
+			Err(err).
+			Str("User", user.Uid).
+			Str("Content", string(jsonData)).
+			Msg("Invalid json data on /query endpoint")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
 			content:   "Data Format Error",
@@ -59,21 +63,27 @@ func openAIQueryEndpointHandler(c *gin.Context) {
 	d, _ := io.ReadAll(c.Request.Body)
 
 	if err = json.Unmarshal(d, &request); err != nil {
+		log.Error().
+			Err(err).
+			Str("User", user.Uid).
+			Str("Content", string(d)).
+			Msg("Invalid json data trying to unmarshal in QueryRequest")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
 			content:   "Data Format Error",
 		})
 		return
 	}
-	fmt.Println(string(d))
-	fmt.Println(request.Queries)
 
 	queries := request.Queries
-
 	gptClient := openai.NewClient(user.OpenAIApiKey)
 
 	_, err = gptClient.ListModels(context.Background())
 	if err != nil {
+		log.Error().
+			Err(err).
+			Str("User", user.Uid).
+			Msg("Invalid OpenAI Token")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: PineconeError,
 			content:   "Invalid OpenaAI API Key",
@@ -81,7 +91,7 @@ func openAIQueryEndpointHandler(c *gin.Context) {
 		return
 	}
 
-	embeddings := ada002Embeddings(gptClient, queries)
+	embeddings := ada002Embeddings(gptClient, user.Uid, queries)
 
 	pineconeIndex, _ := pinecone.NewIndexClient(
 		pinecone.WithIndexName(user.PineconeIndex),
@@ -93,6 +103,10 @@ func openAIQueryEndpointHandler(c *gin.Context) {
 	// validate credentials
 	_, err = pineconeIndex.DescribeIndexStats(context.Background(), pinecone.DescribeIndexStatsParams{})
 	if err != nil {
+		log.Error().
+			Err(err).
+			Str("User", user.Uid).
+			Msg("Invalaid Pinecone Credentials")
 		c.JSON(http.StatusUnauthorized, RequestErrorResult{
 			errorCode: PineconeError,
 			content:   "Unable to login to pinecone",

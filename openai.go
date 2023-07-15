@@ -12,7 +12,7 @@ const (
 )
 
 // method that returns a list of embedding information in the right order that we sent, the Embedding field of each of these is the vector represneation
-func openaiEmbedding(client *openai.Client, model openai.EmbeddingModel, texts []string) [][]float32 {
+func openaiEmbedding(client *openai.Client, model openai.EmbeddingModel, user string, texts []string) [][]float32 {
 	request := openai.EmbeddingRequest{
 		Input: texts,
 		Model: model,
@@ -33,6 +33,6 @@ func openaiEmbedding(client *openai.Client, model openai.EmbeddingModel, texts [
 	return embeddingVectors
 }
 
-func ada002Embeddings(client *openai.Client, texts []string) [][]float32 {
-	return openaiEmbedding(client, openai.AdaEmbeddingV2, texts)
+func ada002Embeddings(client *openai.Client, user string, texts []string) [][]float32 {
+	return openaiEmbedding(client, openai.AdaEmbeddingV2, user, texts)
 }

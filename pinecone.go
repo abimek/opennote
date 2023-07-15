@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/nekomeowww/go-pinecone"
-	"log"
+	"github.com/rs/zerolog/log"
 )
 
 // Querys pinecone and returns the content
@@ -17,7 +17,10 @@ func queryPinecone(indexClient *pinecone.IndexClient, topK int64, embedding []fl
 
 	resp, err := indexClient.Query(context.Background(), params)
 	if err != nil {
-		log.Fatal(err)
+		log.Error().
+			Err(err).
+			Msg("Invalid Pinecone Index On Request")
+		return []string{}
 	}
 
 	var results []string
