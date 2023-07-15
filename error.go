@@ -8,6 +8,7 @@ const (
 	FirestoreError
 	ServerError
 	PineconeError
+	InvalidCredsError
 )
 
 func (c WebsiteRequestError) String() string {
@@ -22,6 +23,8 @@ func (c WebsiteRequestError) String() string {
 		return "ServerError"
 	case PineconeError:
 		return "PineconeError"
+	case InvalidCredsError:
+		return "InvalidCredsError"
 	}
 	return ""
 }

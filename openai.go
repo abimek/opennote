@@ -3,25 +3,19 @@ package main
 import (
 	"context"
 	"github.com/sashabaranov/go-openai"
-	"log"
-)
-
-const (
-	USER = "Abi" // USER is a unique id for the specific isntance requesting embeddings, it will later change to be instance
-	// of the app but for now we will keep it a constant
 )
 
 // method that returns a list of embedding information in the right order that we sent, the Embedding field of each of these is the vector represneation
-func openaiEmbedding(client *openai.Client, model openai.EmbeddingModel, user string, texts []string) [][]float32 {
+func openaiEmbedding(client *openai.Client, model openai.EmbeddingModel, user string, texts []string) ([][]float32, error) {
 	request := openai.EmbeddingRequest{
 		Input: texts,
 		Model: model,
-		User:  USER,
+		User:  user,
 	}
 
 	resp, err := client.CreateEmbeddings(context.Background(), request)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	embeddingObjects := resp.Data
@@ -30,9 +24,9 @@ func openaiEmbedding(client *openai.Client, model openai.EmbeddingModel, user st
 	for i, embedding := range embeddingObjects {
 		embeddingVectors[i] = embedding.Embedding
 	}
-	return embeddingVectors
+	return embeddingVectors, nil
 }
 
-func ada002Embeddings(client *openai.Client, user string, texts []string) [][]float32 {
+func ada002Embeddings(client *openai.Client, user string, texts []string) ([][]float32, error) {
 	return openaiEmbedding(client, openai.AdaEmbeddingV2, user, texts)
 }

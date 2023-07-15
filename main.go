@@ -34,10 +34,10 @@ func main() {
 	r.StaticFile("/.well-known/logo.png", "./resources/logo.png")
 	r.StaticFile("/.well-known/openapi.yaml", "./resources/openapi.yaml")
 	log.Debug().Msg("Initilizing Requests")
-	routing.Route(r, "POST", "/query", openAIQueryEndpointHandler)
 	routing.Route(r, "POST", "/api/createEmptyUser", initEmptyUserEndpoint)
 	routing.Route(r, "POST", "/api/getUser", getUserEndpoint)
 	routing.Route(r, "POST", "/api/updateUser", updateUserEndpoint)
+	routing.Route(r, "POST", "/message", queryMessageEndpoint)
 
 	log.Info().Msgf("OpenNote server running on port %s", "3323")
 	r.Run(":3323")
