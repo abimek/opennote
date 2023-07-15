@@ -35,7 +35,7 @@ func validateUID(uid string, c *gin.Context) bool {
 
 type QueryMessageRequest struct {
 	Uid  string `json:"uid"`
-	Chat string `json:"string"`
+	Chat string `json:"chat"`
 }
 
 func queryMessageEndpoint(c *gin.Context) {
@@ -61,9 +61,9 @@ func queryMessageEndpoint(c *gin.Context) {
 	sess := GetSessionIfExists(request.Uid)
 	if sess == nil {
 		// validate UID exists
-		if !validateUID(request.Uid, c) {
-			return
-		}
+		//	if !validateUID(request.Uid, c) {
+		//		return
+		//	}
 
 		docs, err := firestoreClient.Collection("users").Where("uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
 		if err != nil || len(docs) == 0 {

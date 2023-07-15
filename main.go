@@ -21,6 +21,7 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	// intialize firebase
 	firebaseSetup()
+	sessions = map[string]*session{}
 
 	r := gin.Default()
 	// cors is not necessary on production, I'll be attempting to run this on a docker container soon

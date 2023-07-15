@@ -74,6 +74,9 @@ func GetSession(user User) (*session, error) {
 					"queries": {
 						Type:        jsonschema.Array,
 						Description: "List of quereis, like 'Zustand Usage' or 'B-Tree Implemenation'",
+						Items: &jsonschema.Definition{
+							Type: "string",
+						},
 					},
 				},
 			},
@@ -189,6 +192,8 @@ func (s *session) queryNotes(query string) string {
 		})
 	}
 	data, _ := json.Marshal(resp)
-
+	log.Debug().
+		Str("Content", string(data)).
+		Msg("Content in the request")
 	return string(data)
 }
