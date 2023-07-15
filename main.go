@@ -6,7 +6,6 @@ import (
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"github.com/abimek/opennote/routing"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -25,14 +24,12 @@ func main() {
 
 	r := gin.Default()
 	// cors is not necessary on production, I'll be attempting to run this on a docker container soon
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3323", "https://chat.openai.com"}
-	r.Use(routing.CORS)
+	/*
+		config := cors.DefaultConfig()
+		config.AllowOrigins = []string{"http://localhost:3323", "https://chat.openai.com"}
+		r.Use(routing.CORS)*/
 
 	// serving static file to OpenAI
-	r.StaticFile("/.well-known/ai-plugin.json", "./resources/ai-plugin.json")
-	r.StaticFile("/.well-known/logo.png", "./resources/logo.png")
-	r.StaticFile("/.well-known/openapi.yaml", "./resources/openapi.yaml")
 	log.Debug().Msg("Initilizing Requests")
 	routing.Route(r, "POST", "/api/createEmptyUser", initEmptyUserEndpoint)
 	routing.Route(r, "POST", "/api/getUser", getUserEndpoint)
