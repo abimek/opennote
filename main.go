@@ -9,18 +9,14 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"google.golang.org/api/option"
-	"sync"
 )
 
+// Handle the chance that they need mutexes if that actually happens
 var firestoreClient *firestore.Client
-var firestoreMutex sync.Mutex
 
 var fireauthClient *auth.Client
-var authMutex sync.Mutex
 
 func main() {
-	authMutex = sync.Mutex{}
-	firestoreMutex = sync.Mutex{}
 	// intialize firebase
 	firebaseSetup()
 

@@ -35,9 +35,7 @@ func openAIQueryEndpointHandler(c *gin.Context) {
 		c.Status(http.StatusUnauthorized)
 		return
 	}
-	firestoreMutex.Lock()
 	docs, err := firestoreClient.Collection("users").Where("token", "==", token).Limit(1).Documents(context.Background()).GetAll()
-	firestoreMutex.Unlock()
 	if err != nil || len(docs) == 0 {
 		c.JSON(http.StatusUnauthorized, RequestErrorResult{
 			errorCode: FirestoreError,
