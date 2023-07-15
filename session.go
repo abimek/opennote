@@ -49,7 +49,7 @@ func GetSession(user User) (*session, error) {
 		pinecone.WithIndexName(user.PineconeIndex),
 		pinecone.WithAPIKey(user.PineconeApiKey),
 		pinecone.WithEnvironment(user.PineconeEnvironment),
-		pinecone.WithProjectName(user.PrinconeProjectName),
+		pinecone.WithProjectName(user.PineconeProjectName),
 	)
 	s.chatClient = openai.NewClient(user.OpenAIApiKey)
 	s.index = pineconeIndex

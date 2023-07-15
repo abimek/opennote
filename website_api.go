@@ -13,10 +13,6 @@ type RequestErrorResult struct {
 	content   string              `json:"content"`
 }
 
-type WebsiteCreateUserRequest struct {
-	uid string `json:"uid"`
-}
-
 func validateUID(uid string, c *gin.Context) bool {
 	_, err := fireauthClient.GetUser(context.Background(), uid)
 	if err != nil {
@@ -28,6 +24,18 @@ func validateUID(uid string, c *gin.Context) bool {
 			errorCode: NonExistentUser,
 			content:   "This user does not exist, invalid UID",
 		})
+		return false
+	}
+	return true
+}
+
+func validateUIDBool(uid string) bool {
+	_, err := fireauthClient.GetUser(context.Background(), uid)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("User", uid).
+			Msg("Failed to validate UID, database error")
 		return false
 	}
 	return true
@@ -60,12 +68,12 @@ func queryMessageEndpoint(c *gin.Context) {
 
 	sess := GetSessionIfExists(request.Uid)
 	if sess == nil {
-		// validate UID exists
-		//	if !validateUID(request.Uid, c) {
-		//		return
-		//	}
 
-		docs, err := firestoreClient.Collection("users").Where("uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
+		if !validateUID(request.Uid, c) {
+			return
+		}
+
+		docs, err := firestoreClient.Collection("users").Where("Uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
 		if err != nil || len(docs) == 0 {
 			log.Debug().Str("User", request.Uid).Msg("Request trying to find invalid user")
 			c.JSON(http.StatusBadRequest, RequestErrorResult{
@@ -117,9 +125,15 @@ func queryMessageEndpoint(c *gin.Context) {
 	c.String(http.StatusOK, content)
 }
 
+type WebsiteCreateUserRequest struct {
+	Uid string `json:"uid"`
+}
+
 // query is the primary function used by ChatGPT to query data from this plugin, /
 func initEmptyUserEndpoint(c *gin.Context) {
 	var request WebsiteCreateUserRequest
+	log.Debug().
+		Msg("Creating new empty user")
 	if err := c.BindJSON(&request); err != nil {
 		log.Error().
 			Err(err).
@@ -130,7 +144,8 @@ func initEmptyUserEndpoint(c *gin.Context) {
 		})
 		return
 	}
-	if request.uid == "" {
+	if request.Uid == "" {
+		log.Debug().Msg("empty UID")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: InvalidRequestContent,
 			content:   "Empty UID",
@@ -138,16 +153,21 @@ func initEmptyUserEndpoint(c *gin.Context) {
 		return
 	}
 
-	//validate UID
-	if !validateUID(request.uid, c) {
+	log.Debug().
+		Str("user", request.Uid).
+		Msg("Validating User")
+
+	//validate UID as an account
+	if !validateUIDBool(request.Uid) {
 		return
 	}
 
 	user := User{}
+	user.Uid = request.Uid
 
-	user.Uid = request.uid
 	// upload to firestore (user object) only if it doesn't exist,
 	_, _, err := firestoreClient.Collection("users").Add(context.Background(), user)
+	_, _, err = firestoreClient.Collection("users").Add(context.Background(), map[string]string{"yo": "dog"})
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -160,11 +180,14 @@ func initEmptyUserEndpoint(c *gin.Context) {
 		})
 		return
 	}
+	log.Debug().
+		Str("User", user.Uid).
+		Msg("Created new empty user")
 	c.Status(http.StatusCreated)
 }
 
 type GetUserRequest struct {
-	uid string `json:"uid"`
+	Uid string `json:"uid"`
 }
 
 func getUserEndpoint(c *gin.Context) {
@@ -179,7 +202,7 @@ func getUserEndpoint(c *gin.Context) {
 		})
 		return
 	}
-	if request.uid == "" {
+	if request.Uid == "" {
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: InvalidRequestContent,
 			content:   "Empty UID",
@@ -188,13 +211,13 @@ func getUserEndpoint(c *gin.Context) {
 	}
 
 	// validate UID exists
-	if !validateUID(request.uid, c) {
-		return
-	}
+	//	if !validateUID(request.Uid, c) {
+	//		return
+	//	}
 
-	docs, err := firestoreClient.Collection("users").Where("uid", "==", request.uid).Limit(1).Documents(context.Background()).GetAll()
+	docs, err := firestoreClient.Collection("users").Where("Uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
 	if err != nil || len(docs) == 0 {
-		log.Debug().Str("User", request.uid).Msg("Request trying to find invalid user")
+		log.Debug().Str("User", request.Uid).Msg("Request trying to find invalid user")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
 			content:   "Unable to find user in firestore",
@@ -207,6 +230,7 @@ func getUserEndpoint(c *gin.Context) {
 }
 
 func updateUserEndpoint(c *gin.Context) {
+	log.Debug().Msg("Update User Endpoint Runnign")
 	var request User
 	if err := c.BindJSON(&request); err != nil {
 		log.Error().
@@ -227,9 +251,14 @@ func updateUserEndpoint(c *gin.Context) {
 	}
 
 	// validate UID exists
-	if !validateUID(request.Uid, c) {
+	// TODO: Uncomment
+	/*	if !validateUID(request.Uid, c) {
 		return
-	}
+	}*/
+
+	log.Debug().
+		Str("User", request.Uid).
+		Msg("getting user session")
 
 	// upload the info for the current session
 	if ses := GetSessionIfExists(request.Uid); ses != nil {
@@ -238,9 +267,18 @@ func updateUserEndpoint(c *gin.Context) {
 		ses.userMu.Unlock()
 	}
 
+	log.Debug().
+		Str("User", request.Uid).
+		Msg("Updating Document")
 	// Update Document
-	docs, err := firestoreClient.Collection("users").Where("uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
+	docs, err := firestoreClient.Collection("users").Where("Uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
 	if err != nil || len(docs) == 0 {
+		if err != nil {
+			log.Error().
+				Err(err).
+				Msg("unable to find user")
+		}
+
 		log.Debug().Str("User", request.Uid).Msg("Request trying to find invalid user")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
