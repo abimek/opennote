@@ -35,7 +35,7 @@ func main() {
 	routing.Route(r, "POST", "/api/updateUser", updateUserEndpoint)
 	routing.Route(r, "POST", "/message", queryMessageEndpoint)
 
-	log.Info().Msgf("OpenNote server running on port %s", "3323")
+	go sessionTimer()
 	r.Run(":3323")
 }
 

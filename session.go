@@ -8,7 +8,11 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sashabaranov/go-openai"
 	"sync"
+	"time"
 )
+
+// SessionTimeLimit is the max duration of a session, it is in minutes
+const SessionTimeLimit = 5
 
 var sessions map[string]*session
 
@@ -22,6 +26,20 @@ type session struct {
 	index      *pinecone.IndexClient
 	chatClient *openai.Client
 	req        openai.ChatCompletionRequest
+	deleteTime time.Time
+}
+
+// sessionTimer will timeout sessions that should be expired, the default is 5 min per session for now
+func sessionTimer() {
+	for range time.Tick(time.Minute) {
+		sessionsMutex.Lock()
+		for k, v := range sessions {
+			if time.Now().After(v.deleteTime) {
+				delete(sessions, k)
+			}
+		}
+		sessionsMutex.Unlock()
+	}
 }
 
 // GetSessionIfExists will return the session if it is in he sessions map, it is primarily used for the updated api when
@@ -34,6 +52,11 @@ func GetSessionIfExists(uid string) *session {
 		return s
 	}
 	return nil
+}
+
+// updateTimer will update the session delete time to be SessionTimeLimit minutes in the future
+func (s *session) updateTimer() {
+	s.deleteTime = time.Now().Add(SessionTimeLimit * time.Minute)
 }
 
 // GetSession will see if a session exists, if so return it, otherwise it will validate the credentials in the passed
@@ -100,6 +123,7 @@ func (s *session) ValidateCredentials() error {
 
 // Message will send a message to the chatbot with the context
 func (s *session) Message(message string) (string, error) {
+	s.updateTimer()
 	s.req.Messages = append(s.req.Messages, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleUser,
 		Content: message,
