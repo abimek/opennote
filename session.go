@@ -36,6 +36,8 @@ func GetSessionIfExists(uid string) *session {
 	return nil
 }
 
+// GetSession will see if a session exists, if so return it, otherwise it will validate the credentials in the passed
+// in user object (credentials for pinecone and openai) and then create a session and return it.
 func GetSession(user User) (*session, error) {
 	sessionsMutex.Lock()
 	s, ok := sessions[user.Uid]
