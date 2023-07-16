@@ -12,9 +12,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-// Handle the chance that they need mutexes if that actually happens
 var firestoreClient *firestore.Client
-
 var fireauthClient *auth.Client
 
 func main() {
@@ -41,7 +39,7 @@ func main() {
 	r.Run(":3323")
 }
 
-// firebaseSetup will intilizes the firestore and fireauth clients
+// firebaseSetup inits firebaseAuth and firestore
 func firebaseSetup() {
 	// intialize firestore
 	config := &firebase.Config{

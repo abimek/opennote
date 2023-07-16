@@ -7,7 +7,6 @@ import (
 	"github.com/nekomeowww/go-pinecone"
 	"github.com/rs/zerolog/log"
 	"github.com/sashabaranov/go-openai"
-	"github.com/sashabaranov/go-openai/jsonschema"
 	"sync"
 )
 
@@ -25,6 +24,8 @@ type session struct {
 	req        openai.ChatCompletionRequest
 }
 
+// GetSessionIfExists will return the session if it is in he sessions map, it is primarily used for the updated api when
+// the session needs to be updated mid way.
 func GetSessionIfExists(uid string) *session {
 	sessionsMutex.Lock()
 	s, ok := sessions[uid]
@@ -63,30 +64,14 @@ func GetSession(user User) (*session, error) {
 	}
 
 	s.req = openai.ChatCompletionRequest{
-		Model:    openai.GPT3Dot5Turbo0613,
-		Messages: []openai.ChatCompletionMessage{},
-		Functions: []openai.FunctionDefinition{{
-			Name:        "query_notes",
-			Description: "This function returns notes from the users personal NOTES. If you ask about lets say Zustand the React state-management library it'll return relevant information from the users own notes. ",
-			Parameters: &jsonschema.Definition{
-				Type: jsonschema.Object,
-				Properties: map[string]jsonschema.Definition{
-					"queries": {
-						Type:        jsonschema.Array,
-						Description: "List of quereis, like 'Zustand Usage' or 'B-Tree Implemenation'",
-						Items: &jsonschema.Definition{
-							Type: "string",
-						},
-					},
-				},
-			},
-		}},
-		FunctionCall: "auto",
+		Model:        openai.GPT3Dot5Turbo0613,
+		Messages:     []openai.ChatCompletionMessage{},
+		FunctionCall: function_call_defintions(),
 	}
-
 	return s, nil
 }
 
+// ValidateCredentials will check to see if the Pinecone credentials and the OpenAI credentials are invalid
 func (s *session) ValidateCredentials() error {
 	_, err := s.chatClient.ListModels(context.Background())
 	if err != nil {
@@ -111,6 +96,7 @@ func (s *session) ValidateCredentials() error {
 	return nil
 }
 
+// Message will send a message to the chatbot with the context
 func (s *session) Message(message string) (string, error) {
 	s.req.Messages = append(s.req.Messages, openai.ChatCompletionMessage{
 		Role:    openai.ChatMessageRoleUser,
@@ -118,33 +104,22 @@ func (s *session) Message(message string) (string, error) {
 	})
 	resp, err := s.chatClient.CreateChatCompletion(context.Background(), s.req)
 	if err != nil {
-		s.userMu.RLock()
-		log.Error().
-			Err(err).
-			Str("User", s.user.Uid).
-			Msg("Failed to get response")
-		s.userMu.RUnlock()
 		return "", err
 	}
 	call := resp.Choices[0].Message.FunctionCall
 	if call != nil {
 		switch call.Name {
 		case "query_notes":
+			// query our notes for information
 			response := s.queryNotes(call.Arguments)
 			s.req.Messages = append(s.req.Messages, resp.Choices[0].Message)
 			s.req.Messages = append(s.req.Messages, openai.ChatCompletionMessage{
 				Role:    openai.ChatMessageRoleFunction,
-				Name:    "query_notes",
+				Name:    QueryNotesName,
 				Content: response,
 			})
 			resp, err = s.chatClient.CreateChatCompletion(context.Background(), s.req)
 			if err != nil {
-				s.userMu.RLock()
-				log.Error().
-					Err(err).
-					Str("User", s.user.Uid).
-					Msg("Failed to get response")
-				s.userMu.RUnlock()
 				return "", err
 			}
 		}
@@ -153,9 +128,11 @@ func (s *session) Message(message string) (string, error) {
 	return resp.Choices[0].Message.Content, nil
 }
 
+// queryNotes will query embed the query and use the embedding to query pinecone and get the content and return it
 func (s *session) queryNotes(query string) string {
 	var request QueryRequest
 	if err := json.Unmarshal([]byte(query), &request); err != nil {
+		// we're going to keep this specific log because it's important for bug testing and logging in the future
 		s.userMu.RLock()
 		log.Error().
 			Err(err).
@@ -171,12 +148,8 @@ func (s *session) queryNotes(query string) string {
 	s.userMu.RLock()
 	embeddings, err := ada002Embeddings(s.chatClient, s.user.Uid, queries)
 	s.userMu.RUnlock()
+
 	if err != nil {
-		s.userMu.RLock()
-		log.Debug().
-			Str("User", s.user.Uid).
-			Msg("Unable to get emebddings for the user")
-		s.userMu.RUnlock()
 		return ""
 	}
 
@@ -192,8 +165,5 @@ func (s *session) queryNotes(query string) string {
 		})
 	}
 	data, _ := json.Marshal(resp)
-	log.Debug().
-		Str("Content", string(data)).
-		Msg("Content in the request")
 	return string(data)
 }

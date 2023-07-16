@@ -8,136 +8,109 @@ import (
 	"net/http"
 )
 
+// RequestErrorResult is the error result when something does go the right way.
 type RequestErrorResult struct {
 	errorCode WebsiteRequestError `json:"error_code"`
 	content   string              `json:"content"`
 }
 
 func validateUID(uid string, c *gin.Context) bool {
-	_, err := fireauthClient.GetUser(context.Background(), uid)
-	if err != nil {
-		log.Error().
-			Err(err).
-			Str("User", uid).
-			Msg("Invalid User")
+	valid := validateUIDBool(uid)
+	if !valid {
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: NonExistentUser,
 			content:   "This user does not exist, invalid UID",
 		})
-		return false
 	}
-	return true
+	return valid
 }
 
 func validateUIDBool(uid string) bool {
 	_, err := fireauthClient.GetUser(context.Background(), uid)
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("User", uid).
-			Msg("Failed to validate UID, database error")
 		return false
 	}
 	return true
 }
 
+// QueryMessageRequest is the request sent to /message when sending a users message to the endpoint.
 type QueryMessageRequest struct {
-	Uid  string `json:"uid"`
+	Uid string `json:"uid"`
+	// Chat is the message the user gave the AI
 	Chat string `json:"chat"`
 }
 
+// queryMessageEndpoint is the endpoint at /message and is the chatMessaging api. If the user exists it starts a chat
+// sessions with the openAI bot and enables it to query the users notes.
 func queryMessageEndpoint(c *gin.Context) {
 	var request QueryMessageRequest
 	if err := c.BindJSON(&request); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Invalid json data on message endpoint")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: InvalidRequestContent,
 			content:   "Content doesn't match expected structure",
-		})
-		return
-	}
-	if request.Uid == "" {
-		c.JSON(http.StatusBadRequest, RequestErrorResult{
-			errorCode: InvalidRequestContent,
-			content:   "Empty UID",
 		})
 		return
 	}
 
 	sess := GetSessionIfExists(request.Uid)
 	if sess == nil {
-
 		if !validateUID(request.Uid, c) {
 			return
 		}
 
 		docs, err := firestoreClient.Collection("users").Where("Uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
 		if err != nil || len(docs) == 0 {
-			log.Debug().Str("User", request.Uid).Msg("Request trying to find invalid user")
 			c.JSON(http.StatusBadRequest, RequestErrorResult{
 				errorCode: FirestoreError,
 				content:   "Unable to find user in firestore",
 			})
 			return
 		}
+
 		jsonData, _ := json.Marshal(docs[0].Data())
 		var user User
 		if err = json.Unmarshal(jsonData, &user); err != nil {
-			log.Error().
-				Err(err).
-				Str("User", user.Uid).
-				Str("Content", string(jsonData)).
-				Msg("Invalid json data on /message endpoint")
 			c.JSON(http.StatusBadRequest, RequestErrorResult{
 				errorCode: FirestoreError,
 				content:   "Data Format Error",
 			})
 			return
 		}
+
 		sess, err = GetSession(user)
 		if err != nil {
-			log.Error().
-				Err(err).
-				Str("User", user.Uid).
-				Str("Content", string(jsonData)).
-				Msg("Invalid Credentials")
 			c.JSON(http.StatusExpectationFailed, RequestErrorResult{
 				errorCode: InvalidCredsError,
 				content:   "Expected valid credentials for user",
 			})
+			return
 		}
 	}
+
 	content, err := sess.Message(request.Chat)
+
 	if err != nil {
 		sess.userMu.RLock()
-		log.Error().
-			Err(err).
-			Str("User", sess.user.Uid).
-			Msg("Invalid Credentials")
 		sess.userMu.RUnlock()
 		c.JSON(http.StatusExpectationFailed, RequestErrorResult{
 			errorCode: InvalidCredsError,
 			content:   "Expected valid credentials for user",
 		})
+		return
 	}
 	c.String(http.StatusOK, content)
 }
 
+// WebsiteCreateUserRequest is the request sent to the /api/createEmptyUser endpoint.
 type WebsiteCreateUserRequest struct {
 	Uid string `json:"uid"`
 }
 
-// query is the primary function used by ChatGPT to query data from this plugin, /
+// initEmptyUserEndpoint is the endpoint at /api/createEmptyUser and it creates a new user in the db if a user doesn't
+// exist
 func initEmptyUserEndpoint(c *gin.Context) {
 	var request WebsiteCreateUserRequest
-	log.Debug().
-		Msg("Creating new empty user")
 	if err := c.BindJSON(&request); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Invalid json data on create user endpoint")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: InvalidRequestContent,
 			content:   "Content doesn't match expected structure",
@@ -145,17 +118,12 @@ func initEmptyUserEndpoint(c *gin.Context) {
 		return
 	}
 	if request.Uid == "" {
-		log.Debug().Msg("empty UID")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: InvalidRequestContent,
 			content:   "Empty UID",
 		})
 		return
 	}
-
-	log.Debug().
-		Str("user", request.Uid).
-		Msg("Validating User")
 
 	//validate UID as an account
 	if !validateUIDBool(request.Uid) {
@@ -167,41 +135,33 @@ func initEmptyUserEndpoint(c *gin.Context) {
 
 	// upload to firestore (user object) only if it doesn't exist,
 	_, _, err := firestoreClient.Collection("users").Add(context.Background(), user)
-	_, _, err = firestoreClient.Collection("users").Add(context.Background(), map[string]string{"yo": "dog"})
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("User", user.Uid).
-			Msg("Failed to upload content to firebase")
-
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
 			content:   "Unable to upload document to firestore",
 		})
 		return
 	}
-	log.Debug().
-		Str("User", user.Uid).
-		Msg("Created new empty user")
 	c.Status(http.StatusCreated)
 }
 
+// GetUserRequest is the request sent when trying to get a user at /api/getUser from the frontend.
 type GetUserRequest struct {
 	Uid string `json:"uid"`
 }
 
+// getUserEndpoint is the endpoint at /api/getUser and allows the frontend to get the information about a specific user
+// to enable them to populate the screen content about the users information.
 func getUserEndpoint(c *gin.Context) {
 	var request GetUserRequest
 	if err := c.BindJSON(&request); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Invalid json data on get user endpoint")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: InvalidRequestContent,
 			content:   "Content doesn't match expected structure",
 		})
 		return
 	}
+
 	if request.Uid == "" {
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: InvalidRequestContent,
@@ -210,81 +170,50 @@ func getUserEndpoint(c *gin.Context) {
 		return
 	}
 
-	// validate UID exists
-	//	if !validateUID(request.Uid, c) {
-	//		return
-	//	}
+	if !validateUID(request.Uid, c) {
+		return
+	}
 
 	docs, err := firestoreClient.Collection("users").Where("Uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
 	if err != nil || len(docs) == 0 {
-		log.Debug().Str("User", request.Uid).Msg("Request trying to find invalid user")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: FirestoreError,
 			content:   "Unable to find user in firestore",
 		})
 		return
 	}
+
 	doc := docs[0]
 	c.JSON(http.StatusOK, doc.Data())
 	return
 }
 
+// updateUserEndpoint is the endpoint at /api/updateUser and allows the frontend to update what a specific user lookslike
 func updateUserEndpoint(c *gin.Context) {
-	log.Debug().Msg("Update User Endpoint Runnign")
 	var request User
 	if err := c.BindJSON(&request); err != nil {
-		log.Error().
-			Err(err).
-			Msg("Invalid json data on get user endpoint")
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
 			errorCode: InvalidRequestContent,
 			content:   "Content doesn't match expected structure",
 		})
 		return
 	}
-	if request.Uid == "" {
+
+	// Update Document
+	docs, err := firestoreClient.Collection("users").Where("Uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
+	if err != nil || len(docs) == 0 {
 		c.JSON(http.StatusBadRequest, RequestErrorResult{
-			errorCode: InvalidRequestContent,
-			content:   "Empty UID",
+			errorCode: FirestoreError,
+			content:   "Unable to find user in firestore",
 		})
 		return
 	}
-
-	// validate UID exists
-	// TODO: Uncomment
-	/*	if !validateUID(request.Uid, c) {
-		return
-	}*/
-
-	log.Debug().
-		Str("User", request.Uid).
-		Msg("getting user session")
 
 	// upload the info for the current session
 	if ses := GetSessionIfExists(request.Uid); ses != nil {
 		ses.userMu.Lock()
 		ses.user = request
 		ses.userMu.Unlock()
-	}
-
-	log.Debug().
-		Str("User", request.Uid).
-		Msg("Updating Document")
-	// Update Document
-	docs, err := firestoreClient.Collection("users").Where("Uid", "==", request.Uid).Limit(1).Documents(context.Background()).GetAll()
-	if err != nil || len(docs) == 0 {
-		if err != nil {
-			log.Error().
-				Err(err).
-				Msg("unable to find user")
-		}
-
-		log.Debug().Str("User", request.Uid).Msg("Request trying to find invalid user")
-		c.JSON(http.StatusBadRequest, RequestErrorResult{
-			errorCode: FirestoreError,
-			content:   "Unable to find user in firestore",
-		})
-		return
 	}
 
 	doc := docs[0]
