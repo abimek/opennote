@@ -23,17 +23,15 @@ func main() {
 
 	r := gin.Default()
 	// cors is not necessary on production, I'll be attempting to run this on a docker container soon
-	/*
-		config := cors.DefaultConfig()
-		config.AllowOrigins = []string{"http://localhost:3323", "https://chat.openai.com"}
-		r.Use(routing.CORS)*/
-
+	r.Use(routing.GENERAL)
 	// serving static file to OpenAI
 	log.Debug().Msg("Initilizing Requests")
 	routing.Route(r, "POST", "/api/createEmptyUser", initEmptyUserEndpoint)
 	routing.Route(r, "POST", "/api/getUser", getUserEndpoint)
 	routing.Route(r, "POST", "/api/updateUser", updateUserEndpoint)
-	routing.Route(r, "POST", "/message", queryMessageEndpoint)
+	routing.Route(r, "POST", "/api/validateCredentials", validateCredentials)
+	routing.Route(r, "POST", "/messager", queryMessageEndpoint2)
+	//steams
 
 	go sessionTimer()
 	r.Run(":3323")

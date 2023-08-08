@@ -30,12 +30,38 @@ func empty(c *gin.Context) {
 }
 
 // CORS is a function that handles the CORS system for browser app interactions, this is a middleware function
-func CORS(c *gin.Context) {
-	c.Writer.Header().Set("Content-Type", "application/json")
-	c.Writer.Header().Set("Access-Control-Allow-Origin", "https://chat.openai.com")
+func GENERAL(c *gin.Context) {
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 	c.Writer.Header().Set("Access-Control-Max-Age", "86400")
 	c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 	c.Writer.Header().Set("Access-Control-Allow-Headers", strings.Join(c.Request.Header["Access-Control-Request-Headers"][:], ", "))
 	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 	c.Next()
+}
+
+// CORS is a function that handles the CORS system for browser app interactions, this is a middleware function
+func CORS(c *gin.Context) {
+	c.Writer.Header().Set("Content-Type", "application/json")
+	c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+	c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", strings.Join(c.Request.Header["Access-Control-Request-Headers"][:], ", "))
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Next()
+}
+
+// CORS is a function that handles the CORS system for browser app interactions, this is a middleware function
+func CORS_STREAM(c *gin.Context) {
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+	c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	c.Writer.Header().Set("Access-Control-Allow-Headers", strings.Join(c.Request.Header["Access-Control-Request-Headers"][:], ", "))
+	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	c.Next()
+}
+
+func EMPTY_HANDLER(c *gin.Context) {
+
 }

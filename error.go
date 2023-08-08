@@ -9,6 +9,7 @@ const (
 	ServerError
 	PineconeError
 	InvalidCredsError
+	UserExistsError
 )
 
 func (c WebsiteRequestError) String() string {
@@ -25,6 +26,8 @@ func (c WebsiteRequestError) String() string {
 		return "PineconeError"
 	case InvalidCredsError:
 		return "InvalidCredsError"
+	case UserExistsError:
+		return "UserExistsError"
 	}
 	return ""
 }

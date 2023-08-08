@@ -7,7 +7,7 @@ require (
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/nekomeowww/go-pinecone v0.1.0
-	github.com/sashabaranov/go-openai v1.14.0
+	github.com/sashabaranov/go-openai v1.14.1
 	google.golang.org/api v0.114.0
 )
 
