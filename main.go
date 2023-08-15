@@ -26,6 +26,11 @@ func main() {
 	r.Use(routing.GENERAL)
 	// serving static file to OpenAI
 	log.Debug().Msg("Initilizing Requests")
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Hello world!",
+		})
+	})
 	routing.Route(r, "POST", "/api/createEmptyUser", initEmptyUserEndpoint)
 	routing.Route(r, "POST", "/api/getUser", getUserEndpoint)
 	routing.Route(r, "POST", "/api/updateUser", updateUserEndpoint)
@@ -34,7 +39,7 @@ func main() {
 	//steams
 	//r.StaticFile("/download/PinePassInstaller", "./resources/content/PinePassInstaller.exe")
 	go sessionTimer()
-	r.Run("")
+	r.Run()
 }
 
 // firebaseSetup inits firebaseAuth and firestore
