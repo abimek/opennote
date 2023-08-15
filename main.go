@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"google.golang.org/api/option"
+	"os"
 )
 
 var firestoreClient *firestore.Client
@@ -34,7 +35,11 @@ func main() {
 	//steams
 	//r.StaticFile("/download/PinePassInstaller", "./resources/content/PinePassInstaller.exe")
 	go sessionTimer()
-	r.Run(":3323")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	r.Run(":" + port)
 }
 
 // firebaseSetup inits firebaseAuth and firestore
