@@ -1,6 +1,6 @@
 module github.com/abimek/opennote
 
-go 1.18
+go 1.20
 
 require (
 	firebase.google.com/go/v4 v4.11.0
