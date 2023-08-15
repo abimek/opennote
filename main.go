@@ -32,7 +32,7 @@ func main() {
 	routing.Route(r, "POST", "/api/validateCredentials", validateCredentials)
 	routing.Route(r, "POST", "/messager", queryMessageEndpoint2)
 	//steams
-
+	//r.StaticFile("/download/PinePassInstaller", "./resources/content/PinePassInstaller.exe")
 	go sessionTimer()
 	r.Run(":3323")
 }
